@@ -1,1 +1,33 @@
-comp0219/
+# Python environments
+.venv/
+.venv-*/
+venv/
+env/
+
+# Python caches
+__pycache__/
+*.py[cod]
+
+# Build output (build_exe.ps1, pip). Release files go on GitHub Releases, not in git.
+build/
+dist/
+*.spec
+*.egg-info/
+*.whl
+*.exe
+
+# Intermediate images made by docs/build_manual.py
+docs/img/crop_*.png
+
+# Data from test runs
+logs/
+*.csv
+error.log
+
+# Editor and OS files
+.vscode/
+.idea/
+*.swp
+.DS_Store
+Thumbs.db
+desktop.ini

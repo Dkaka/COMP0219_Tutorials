@@ -1,0 +1,26 @@
+# Wind Tunnel Logger - advanced settings.
+# Pressure, temperature, team name, COM port and ground truth are set in the window, not here.
+# This file is copied to %APPDATA%\Wind Tunnel Logger\config.yaml on first run; edit that copy if needed.
+vdas:
+  zero_seconds: 5          # fan-OFF averaging of the tunnel's offset at start-up and on "Re-zero tunnel"
+  max_offset_pa: 6         # fan-off offsets are about +-2..3 Pa; a larger mean means the fan was running
+  fallback_offset_pa: 3    # offset used when the measured one is rejected
+  dp_error_pa: 1.0         # pressure uncertainty behind the shaded band (the VDAS reports whole Pa)
+  cell: 1                  # which AFA5 pressure cell is the tunnel's airspeed reference (its instance switch)
+student:
+  baud: 115200             # your board's serial baud rate
+  rate_hz: 200             # expected stream rate, shown under your reading (red when below 98 %)
+ui:
+  window_seconds: 15       # width of the live plot
+  refresh_ms: 30
+  min_speed: -2
+  max_speed: 100           # values outside [min_speed, max_speed] are clipped on screen
+  mean_seconds: 10         # window of the means in the status line
+logging:
+  align_tolerance_ms: 150  # your sample must be this close to a VDAS sample to pair in *_aligned.csv
+giga:                      # a WindSpeedGiga pitot tube (Arduino GIGA R1), offered as ground truth while plugged in
+  leq_m: 102.177           # its tube-loss calibration, sent after every start (it boots with 0 and reads 50-60 % low)
+  c: 1                     # its pitot coefficient
+  gt_rate_hz: 100          # its sample rate as the ground truth: 50, 100, 200, 250 or 500
+  gt_dp_error_pa: 0.08     # shaded band: its zero accuracy ...
+  gt_speed_error_pct: 3    # ... plus its calibration's accuracy (+-3 % at 8-14 m/s, only validated for 4-14 m/s)
