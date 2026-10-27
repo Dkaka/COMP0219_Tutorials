@@ -16,8 +16,12 @@ dist/
 *.whl
 *.exe
 
-# Intermediate images made by docs/build_manual.py
-docs/img/crop_*.png
+# Maintainer files, kept on the TA's laptop and not in git: the manual (its source, pictures and PDF; the PDF is
+# attached to each release), the logo and VDAS-check scripts, and the release notes and instructions
+docs/
+tools/
+RELEASING.md
+RELEASE_NOTES.md
 
 # Data from test runs
 logs/

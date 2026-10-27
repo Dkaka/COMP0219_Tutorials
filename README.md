@@ -1,4 +1,4 @@
-<img src="docs/img/logo.png" alt="Wind Tunnel Logger logo" width="96" align="right">
+<img src="src/wind_tunnel_logger/icon.png" alt="Wind Tunnel Logger logo" width="96" align="right">
 
 # Wind Tunnel Logger (COMP0219 2026/2027 setup, by Shengyang Zhuang)
 
@@ -7,7 +7,7 @@ ground truth. That reading comes from the tunnel's pressure sensor, through TecQ
 is saved as CSV files for your report and for assessment.
 
 **Full instructions with screenshots** (installing, zeroing the tunnel, running a test, troubleshooting):
-[Wind_Tunnel_Logger_User_Manual.pdf](docs/Wind_Tunnel_Logger_User_Manual.pdf), also attached to each release.
+[Wind_Tunnel_Logger_User_Manual.pdf](https://github.com/Dkaka/COMP0219_Tutorials/releases/latest/download/Wind_Tunnel_Logger_User_Manual.pdf), attached to each release.
 
 ## Install
 
