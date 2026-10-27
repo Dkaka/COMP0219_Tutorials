@@ -1,0 +1,34 @@
+[build-system]
+requires = ["setuptools>=64"]
+build-backend = "setuptools.build_meta"
+
+[project]
+name = "wind-tunnel-logger"
+dynamic = ["version"]
+description = "COMP0219 2026/2027: live plot and logging of a student airspeed sensor against the wind tunnel's own airspeed reading"
+readme = "README.md"
+authors = [{ name = "Shengyang Zhuang" }]
+requires-python = ">=3.9"
+dependencies = [
+    "PySide6>=6.5",
+    "pyqtgraph>=0.13",
+    "pyserial>=3.5",
+    "PyYAML>=6.0",
+    "numpy>=1.24",
+    "hidapi>=0.14",            # reads the tunnel's VDAS box (Windows, macOS, Linux); NOT the different "hid" package
+]
+classifiers = [
+    "Programming Language :: Python :: 3",
+    "Operating System :: Microsoft :: Windows",
+    "Operating System :: MacOS",
+    "Operating System :: POSIX :: Linux",
+]
+
+[project.gui-scripts]
+wind-tunnel-logger = "wind_tunnel_logger.app:main"
+
+[tool.setuptools.dynamic]
+version = { attr = "wind_tunnel_logger.__version__" }
+
+[tool.setuptools.package-data]
+wind_tunnel_logger = ["config.yaml", "icon.png"]

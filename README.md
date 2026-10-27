@@ -1,48 +1,99 @@
-# COMP0219 Tutorial Repository 
+<img src="docs/img/logo.png" alt="Wind Tunnel Logger logo" width="96" align="right">
 
-This repository provides exampels code accomodating the tutorial examples.
+# Wind Tunnel Logger (COMP0219 2026/2027 setup, by Shengyang Zhuang)
 
-For each week, there is a folder containing the corresponding example with code that you could try during the tutorial.
+Live plot and logging of your airspeed sensor against the **wind tunnel's own airspeed reading**, which is the
+ground truth. That reading comes from the tunnel's pressure sensor, through TecQuipment's *VDAS* box. Each run
+is saved as CSV files for your report and for assessment.
 
-### Important Considerations
+**Full instructions with screenshots** (installing, zeroing the tunnel, running a test, troubleshooting):
+[Wind_Tunnel_Logger_User_Manual.pdf](docs/Wind_Tunnel_Logger_User_Manual.pdf), also attached to each release.
 
-#### Workflow
-1. Obtain video footage from a convenient camera or dataset at the lab sessions
-2. Apply computer vision techniques to achieve the intended outcome at tutorial sessions (This can be done on your laptop or the Pi)
-3. Try your code from 2 at the lab session on the Pi with the given camera.
-#### Key Differences to Keep in Mind
+## Install
 
-**Video Format Differences:**
-- There will likely be format/resolution/frame rate differences between your source video and the video captured by the Pi
-- Plan accordingly when testing your code
+Pick **one** of these. Both come from the
+[Releases page](https://github.com/Dkaka/COMP0219_Tutorials/releases) (*Assets* of the latest *Wind Tunnel Logger* release).
 
-**Performance Differences:**
-- There may be differences in performance or availability of hardware (e.g., hardware encoder) between your development environment and the Pi
-- You might see performance differences between tutorial results and actual results on the Pi, especially when running in real-time
+**A. Windows, no Python needed.** Download `WindTunnelLogger.exe` and double-click it.
+If Windows says *"Windows protected your PC"*, click **More info**, then **Run anyway**: the program isn't
+code-signed.
 
-**Optimization Strategies:**
-Consider these approaches to ensure your project runs in real-time:
-- Use lower resolution
-- Reduce frame rate
-- Process only one color channel
-- Modify hardware design
+**B. Any system (Windows, macOS, Linux) with Python 3.9 or newer.** Install from the release's `.whl` file:
 
+```bash
+python -m pip install https://github.com/Dkaka/COMP0219_Tutorials/releases/download/wind-tunnel-logger-v1.0.0/wind_tunnel_logger-1.0.0-py3-none-any.whl
+```
 
-### Environment Setup
+(Or download the `.whl` file and run `python -m pip install wind_tunnel_logger-1.0.0-py3-none-any.whl` in that
+folder.) On macOS/Linux, use `python3` instead of `python`. Then start the program:
 
-1.  **Create a Python Virtual Environment:**
+```bash
+wind-tunnel-logger
+```
 
-    It is recommended to use a virtual environment to manage the project's dependencies. The following command will create a virtual environment named `comp0219` at your machine (pi or laptop)
+If that command isn't found, use `python -m wind_tunnel_logger` instead. To update to a newer release, run the
+same `pip install` line with the new link.
 
-    ```bash
-    python3 -m venv comp0219 --system-site-packages
-    ```
+Nothing else to install: you **don't need TecQuipment's VDAS software**. Wind Tunnel Logger talks to the
+tunnel's VDAS box directly (close the VDAS software if it's open).
 
-2.  **Activate the Virtual Environment:**
+## Use
 
-    Before installing packages and running the scripts, you need to activate the virtual environment:
+1. Keep the **fan OFF**. Plug the tunnel's ground truth into your laptop by USB: the **VDAS box** on the white
+   (TecQuipment) tunnel, the **GIGA** on the wood tunnel.
+2. Start this program and pick *Ground truth*: **Wind tunnel** on the white tunnel, **GIGA pitot tube (COMx)** on
+   the wood tunnel. Within a few seconds the tunnel's data arrives and the program zeroes it.
+3. Enter today's **air pressure**, **air temperature** and your **team** name.
+4. Plug in your board, pick its port and press **Connect**.
+5. Start the fan, press **Start Logging**, run your test, then press **Stop & Save**.
 
-    ```bash
-    source comp0219/bin/activate
-    ```
+Until the tunnel reading arrives, the status line says what's missing (VDAS box not plugged in, tunnel power
+off, ...).
 
+**Plot run…** shows any saved run, and **Help** repeats these steps.
+
+**No tunnel?** Set *Ground truth* to **Simulated (bench test)**. That lets you check your board's connection,
+stream rate and logging at home; the simulated speed is not real wind.
+
+**Using a Mac or Linux?** Install with pip (option B). Reading the tunnel should work there too, but it has
+only been tested on Windows. If it doesn't, plug your board into a teammate's Windows laptop at the tunnel.
+
+**Wood tunnel (GIGA pitot tube).** While its WindSpeedGiga (Arduino GIGA R1) is plugged in, *Ground truth* also
+offers **GIGA pitot tube (COMx)**. The program sends it its calibration (LEQ 102.177 m, C 1; it forgets LEQ when it
+loses power and would read 50–60 % low) and uses its readings only once it confirms them. Keep the fan OFF when you
+pick it: it zeroes itself on the board. Its runs end in `_giga`.
+
+### Your board must
+
+- appear as a USB serial port (a NUCLEO does);
+- print **one speed in m/s per line**, e.g. `printf("%.3f\r\n", v);`;
+- stream at **200 Hz**, at **115200 baud**.
+
+The rate you achieve is shown under your reading. It turns red if it's too slow or if a line isn't a number.
+
+## Saved files
+
+These go to `Documents/Wind Tunnel Logger/logs/` (**Open logs folder**), one set per run:
+
+| File | Contents |
+|---|---|
+| `<team>_<date>_<time>_vdas.csv` | the tunnel's readings (speed, pressure) |
+| `<team>_<date>_<time>_student.csv` | every sample from your board |
+| `<team>_<date>_<time>_aligned.csv` | each tunnel reading paired with your nearest sample |
+
+Runs with simulated ground truth end in `_simulated`.
+
+## Troubleshooting
+
+| Problem | Fix |
+|---|---|
+| Red "NO DATA from the tunnel" | Follow the status line. *VDAS box not found* or *sends no data*: check its USB cable and the tunnel's instrument power, unplug and replug the cable, and close TecQuipment's VDAS software if it's open. *None from pressure cell 1*: ask your TA (AFA5 instance switch) |
+| Linux: VDAS box not found although plugged in | Allow access: `echo 'SUBSYSTEM=="hidraw", ATTRS{idVendor}=="1781", MODE="0666"' \| sudo tee /etc/udev/rules.d/99-vdas.rules`, then `sudo udevadm control --reload` and replug |
+| Red "fan was running" | Stop the fan and press **Re-zero tunnel** |
+| "cannot open COMx" | Close anything else using the port (serial monitor, PuTTY, CubeIDE terminal) |
+| Your rate is red | Your board sends fewer than about 196 lines/s, or some lines aren't plain numbers |
+| `DLL load failed while importing QtCore` (pip, Windows) | Old Anaconda Python. Install Python from python.org, or use the `.exe` |
+| pip error mentioning *long path* (Windows) | Use a shorter folder, or tick *"Disable path length limit"* in the python.org installer |
+
+Errors are also written to `error.log` in the settings folder (`%APPDATA%\Wind Tunnel Logger` on Windows).
+Send that file to the TA.
