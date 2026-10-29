@@ -26,6 +26,8 @@ HEARTBEAT = [0x00, 0x01]    # HID report id 0 + one data byte, as the VDAS softw
 STOP = [0x00, 0x00]         # what the VDAS software sends when it shuts down
 HEARTBEAT_S = 0.6
 OVER_RANGE, UNDER_RANGE = 0x7FFF, 0xFFFF
+ACTIVE_S = 3.0              # a cell counts as reporting if it sent a pressure message this recently
+CHOOSE_WAIT_S = 1.5         # after the first pressure message, wait this long to see which cells report
 
 
 def decode(report):
@@ -51,11 +53,18 @@ def decode(report):
 class GroundTruthReader:
     """Opens the VDAS-F, keeps it streaming with the keep-alive, and passes the readings of one AFA5 cell as
     {"t", "pa", "valid", "cell"} to listener callbacks (called on the reader thread). "valid" is False, and "pa"
-    None, while the cell reports over or under range."""
+    None, while the cell reports over or under range.
+
+    The cell is `cell` if it reports, else the only other AFA5 cell that does (the module's instance switch may have
+    been moved). If several other cells report and `cell` doesn't, none is chosen: see cells_active(). If the cell in
+    use goes quiet while exactly one other reports, that one is used."""
 
     def __init__(self, cell=1):
-        self.cell = int(cell)
+        self.preferred = int(cell)
+        self.cell = None                # the AFA5 cell in use, once chosen
         self.last_report = 0.0          # time of the last USB report of any kind (for diagnostics)
+        self._seen = [0.0] * 8          # time of the last pressure message from each cell (instance 0-7)
+        self._first = 0.0               # time of the first pressure message from any cell
         self._dev = hid.device()
         try:
             self._dev.open(VENDOR_ID, PRODUCT_ID)
@@ -78,13 +87,9 @@ class GroundTruthReader:
                 report = self._dev.read(64, 200)         # waits up to 0.2 s
                 if not report:
                     continue
-                now = time.time()
-                self.last_report = now
-                msg = decode(report)
-                if msg is None or msg[0] != self.cell:
+                reading = self.handle(report, time.time())
+                if reading is None:
                     continue
-                valid = not isinstance(msg[1], str)
-                reading = {"t": now, "pa": msg[1] if valid else None, "valid": valid, "cell": msg[0]}
                 for cb in list(self._listeners):
                     try:
                         cb(reading)
@@ -92,6 +97,37 @@ class GroundTruthReader:
                         print(f"listener error: {e}")
         except (OSError, IOError, ValueError):
             self._alive = False             # unplugged or powered off: the GUI reopens it
+
+    def handle(self, report, now):
+        """One USB report: the reading to pass on, or None (another device, or a cell not in use)."""
+        self.last_report = now
+        msg = decode(report)
+        if msg is None:
+            return None
+        cell, value = msg
+        self._first = self._first or now
+        self._seen[cell] = now
+        self.cell = self._choose(now)
+        if cell != self.cell:
+            return None
+        valid = not isinstance(value, str)
+        return {"t": now, "pa": value if valid else None, "valid": valid, "cell": cell}
+
+    def cells_active(self, now=None):
+        """AFA5 cells that sent a pressure message in the last few seconds."""
+        now = now or time.time()
+        return [c for c, t in enumerate(self._seen) if now - t < ACTIVE_S]
+
+    def _choose(self, now):
+        active = self.cells_active(now)
+        if self.cell is not None:
+            others = [c for c in active if c != self.cell]
+            return others[0] if self.cell not in active and len(others) == 1 else self.cell
+        if self.preferred in active:
+            return self.preferred
+        if now - self._first < CHOOSE_WAIT_S:      # the preferred cell may just not have spoken yet
+            return None
+        return active[0] if len(active) == 1 else None
 
     def add_listener(self, cb):
         self._listeners.append(cb)

@@ -21,10 +21,10 @@ code-signed.
 **B. Any system (Windows, macOS, Linux) with Python 3.9 or newer.** Install from the release's `.whl` file:
 
 ```bash
-python -m pip install https://github.com/Dkaka/COMP0219_Tutorials/releases/download/wind-tunnel-logger-v1.0.0/wind_tunnel_logger-1.0.0-py3-none-any.whl
+python -m pip install https://github.com/Dkaka/COMP0219_Tutorials/releases/download/wind-tunnel-logger-v1.0.1/wind_tunnel_logger-1.0.1-py3-none-any.whl
 ```
 
-(Or download the `.whl` file and run `python -m pip install wind_tunnel_logger-1.0.0-py3-none-any.whl` in that
+(Or download the `.whl` file and run `python -m pip install wind_tunnel_logger-1.0.1-py3-none-any.whl` in that
 folder.) On macOS/Linux, use `python3` instead of `python`. Then start the program:
 
 ```bash
@@ -87,7 +87,7 @@ Runs with simulated ground truth end in `_simulated`.
 
 | Problem | Fix |
 |---|---|
-| Red "NO DATA from the tunnel" | Follow the status line. *VDAS box not found* or *sends no data*: check its USB cable and the tunnel's instrument power, unplug and replug the cable, and close TecQuipment's VDAS software if it's open. *None from pressure cell 1*: ask your TA (AFA5 instance switch) |
+| Red "NO DATA from the tunnel" | Follow the status line. *VDAS box not found* or *sends no data*: check its USB cable and the tunnel's instrument power, unplug and replug the cable, and close TecQuipment's VDAS software if it's open. *No pressure readings* or *sends pressure cells …*: ask your TA (the AFA5 pressure module). With one module, any cell number works: the status line shows which *pressure cell* is read |
 | Linux: VDAS box not found although plugged in | Allow access: `echo 'SUBSYSTEM=="hidraw", ATTRS{idVendor}=="1781", MODE="0666"' \| sudo tee /etc/udev/rules.d/99-vdas.rules`, then `sudo udevadm control --reload` and replug |
 | Red "fan was running" | Stop the fan and press **Re-zero tunnel** |
 | "cannot open COMx" | Close anything else using the port (serial monitor, PuTTY, CubeIDE terminal) |

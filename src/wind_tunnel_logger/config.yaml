@@ -6,7 +6,8 @@ vdas:
   max_offset_pa: 6         # fan-off offsets are about +-2..3 Pa; a larger mean means the fan was running
   fallback_offset_pa: 3    # offset used when the measured one is rejected
   dp_error_pa: 1.0         # pressure uncertainty behind the shaded band (the VDAS reports whole Pa)
-  cell: 1                  # which AFA5 pressure cell is the tunnel's airspeed reference (its instance switch)
+  cell: 1                  # the AFA5 pressure cell to read (its instance switch); if it sends nothing and exactly
+                           # one other cell does, that one is used
 student:
   baud: 115200             # your board's serial baud rate
   rate_hz: 200             # expected stream rate, shown under your reading (red when below 98 %)

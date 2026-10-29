@@ -219,15 +219,18 @@ def vdas_software_running():
 
 class VdasSource(QtCore.QObject):
     """The tunnel's VDAS box (TecQuipment VDAS-F + AFA5 cell) over USB HID (vdas_afa5.GroundTruthReader, which keeps
-    the box streaming with its keep-alive: no VDAS software needed). Reconnects after a USB drop or power cut."""
+    the box streaming with its keep-alive: no VDAS software needed). Reconnects after a USB drop or power cut.
+    Reads AFA5 cell `cell`, or the only other cell that reports if that one is silent (GroundTruthReader)."""
     reading = QtCore.Signal(float, float)   # epoch s, raw Pa (VDAS offset not removed)
     status = QtCore.Signal(str)
+    cell_changed = QtCore.Signal(int)       # another AFA5 cell took over: the zero of the old one doesn't apply
     port_name = "VDAS-HID"
 
     def __init__(self, parent=None, cell=1):
         super().__init__(parent)
         self._reader = None
         self._cell = int(cell)
+        self.cell = None                    # the AFA5 cell in use (set on the reader thread)
         self._timer = QtCore.QTimer(self)
         self._timer.timeout.connect(self._check)
         self._last_frame = 0.0              # last reading of our cell (reader thread writes, GUI thread reads)
@@ -237,8 +240,14 @@ class VdasSource(QtCore.QObject):
         self._check()
         self._timer.start(2000)
 
-    def _on_reading(self, r):   # called on the reader thread; the signal is queued to the GUI thread
+    def _on_reading(self, r):   # called on the reader thread; the signals are queued to the GUI thread
         self._last_frame = time.time()
+        if r["cell"] != self.cell:
+            changed, self.cell = self.cell is not None, r["cell"]
+            why = "" if self.cell == self._cell else f" (cell {self._cell} sends nothing)"
+            self.status.emit(f"reading pressure cell {self.cell}{why}")
+            if changed:
+                self.cell_changed.emit(self.cell)
         if r["valid"]:
             self.reading.emit(r["t"], float(r["pa"]))
 
@@ -247,9 +256,13 @@ class VdasSource(QtCore.QObject):
         now = time.time()
         if now - self._last_frame < 3.0 or now - self._connected_at < 3.0:
             return                          # data is flowing, or the box was only just opened
-        if now - self._reader.last_report < 3.0:
-            self.status.emit(f"the VDAS box sends data, but none from pressure cell {self._cell} - check the "
-                             f"AFA5 module's instance switch is set to {self._cell}")
+        cells = self._reader.cells_active(now)
+        if len(cells) > 1:
+            self.status.emit(f"the VDAS box sends pressure cells {', '.join(map(str, cells))} but not cell "
+                             f"{self._cell} - set the one to use as cell: in config.yaml (ask your TA)")
+        elif now - self._reader.last_report < 3.0:
+            self.status.emit("the VDAS box sends data, but no pressure readings - check the AFA5 pressure module "
+                             "is switched on and connected to the VDAS box")
         elif vdas_software_running():
             self.status.emit("the VDAS box sends no data - close TecQuipment's VDAS software (it isn't needed), "
                              "then unplug and replug the box's USB cable")
@@ -921,6 +934,8 @@ class MainWindow(QtWidgets.QMainWindow):
         else:
             self.vdas = FakeVdas(self) if key == "sim" else VdasSource(self, int(self.cfg["vdas"].get("cell") or 1))
             self.vdas.reading.connect(self.on_vdas)
+            if isinstance(self.vdas, VdasSource):
+                self.vdas.cell_changed.connect(self._on_cell_changed)
             self.gt_name, self.gt_the, self.gt_device = "tunnel", "the tunnel", "VDAS"
             self.pitot_c = 1.0
             self.dp_err, self.speed_err_pct = float(self.cfg["vdas"]["dp_error_pa"]), 0.0
@@ -1108,6 +1123,11 @@ class MainWindow(QtWidgets.QMainWindow):
         self.zeroing = False
         self.btn_zero.setEnabled(True)
 
+    @QtCore.Slot(int)
+    def _on_cell_changed(self, cell):
+        """Another AFA5 cell took over (its instance switch was moved): its zero offset differs, so zero again."""
+        self.begin_zero()
+
     @QtCore.Slot(bool, str)
     def _on_board_zero(self, ok, text):
         """The GIGA's #EVT zero_ok / zero_reject (text without the "#EVT ")."""
@@ -1271,7 +1291,9 @@ class MainWindow(QtWidgets.QMainWindow):
             lines.append(f"last {self.mean_s:g} s mean:   {self.gt_name} {g:.2f} m/s   your sensor {s:.2f} m/s   "
                          f"difference {diff}")
         offset = "-" if self.offset is None else f"{self.offset:+.4f} Pa" if giga else f"{self.offset:+.2f} Pa"
-        lines.append(f"air density {self.rho():.4f} kg/m3   {'GIGA zero' if giga else 'tunnel offset'} {offset}   "
+        cell = getattr(self.vdas, "cell", None)
+        cell = f" (pressure cell {cell})" if cell is not None else ""
+        lines.append(f"air density {self.rho():.4f} kg/m3   {'GIGA zero' if giga else 'tunnel offset'} {offset}{cell}   "
                      f"your board: {self.student_status or '-'}")
         self.lbl_status.setText("\n".join(lines))
         self.lbl_status.setStyleSheet("color: #c00;" if bad else "color: #333;")
