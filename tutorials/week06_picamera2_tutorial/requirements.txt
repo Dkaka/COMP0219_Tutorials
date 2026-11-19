@@ -1,0 +1,17 @@
+# Nothing to install with pip for this tutorial.
+#
+# The scripts in this folder run only on the Raspberry Pi. On the Pi, Picamera2,
+# OpenCV and NumPy must come from apt, not from pip:
+#
+#   sudo apt install -y python3-picamera2 python3-opencv python3-numpy python3-matplotlib
+#
+# The comp0219 virtual environment is made with --system-site-packages, so it
+# already sees these apt packages. pip must not install any NumPy on the Pi:
+# do not pip install picamera2, opencv-python or numpy, and do not pip install
+# other packages that install their own copy of NumPy. A pip copy hides the apt
+# copy, and "from picamera2 import Picamera2" can stop working.
+#
+# The apt NumPy is version 1 on Bookworm and version 2 on Trixie. Both are correct.
+#
+# This file has no package lines on purpose, so "pip install -r requirements.txt"
+# installs nothing. See section B of README.md.
