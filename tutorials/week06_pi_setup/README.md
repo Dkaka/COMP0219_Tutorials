@@ -138,10 +138,10 @@ in the project to start and stop your sensing software remotely. The full `rpi-c
 
 > **Where to run the scripts.** Programs that open a window must run in a terminal on the Pi
 > desktop: either on the lab monitor, or inside Raspberry Pi Connect **Screen sharing**. This
-> applies to `rpicam-hello` and to scripts 1, 3, 3.1 and 4 of the Picamera2 tutorial. Raspberry Pi
+> applies to `rpicam-hello` and to scripts 1, 3, 3.1, 3.2 and 4 of the Picamera2 tutorial. Raspberry Pi
 > Connect **Remote shell** has no desktop, so these programs cannot open a window there.
 > `rpicam-hello` then shows no picture, and the Python scripts stop with an error. `rpicam-still`,
-> `rpicam-vid` and scripts 2, 5 and 5.1 do not need a window, so they also work in Remote shell. A program that you start in Remote shell stops when you close the browser tab.
+> `rpicam-vid` and scripts 2, 5 and 5.1 do not need a window, so they also work in Remote shell. Script 3.2 also works there if you turn its window off (section 3.2 of the Picamera2 tutorial). A program that you start in Remote shell stops when you close the browser tab.
 
 > **Screen sharing needs** a Wayland desktop and a desktop session that logs in automatically.
 > Both are the default on Raspberry Pi OS with desktop. A grey **Screen sharing** badge under the

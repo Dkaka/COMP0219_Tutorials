@@ -68,11 +68,11 @@ If `git clone` says that the folder `COMP0219_Tutorials` already exists, the rep
 
 In this folder, run each script with `python <name of the script>`, for example `python 1_minimal_python_preview.py`. Before you run a script, activate the environment in this terminal with `source ~/comp0219/bin/activate` (section B). Run the shell script of section 0 with `bash 0_sanity_checks.sh`.
 
-Work through the sections in order. In a list of files, `3.1_high_fps_low_res.py` appears before `3_resolution_and_fps.py`, and `5.1_record_120fps.py` appears before `5_record_video_h264.py`. Do script 3 before script 3.1, and script 5 before script 5.1.
+Work through the sections in order. In a list of files, `3.1_high_fps_low_res.py` and `3.2_reading_per_frame.py` appear before `3_resolution_and_fps.py`, and `5.1_record_120fps.py` appears before `5_record_video_h264.py`. Do script 3 before scripts 3.1 and 3.2, and script 5 before script 5.1.
 
-The scripts save their images and videos in the folder in which you run them. If you follow the steps above, this is `~/COMP0219_Tutorials/tutorials/week06_picamera2_tutorial`. If you run a script again, it replaces the file from the earlier run, because it uses the same file name. Section D shows how to copy a file to your laptop.
+The scripts save their images, videos and data files in the folder in which you run them. If you follow the steps above, this is `~/COMP0219_Tutorials/tutorials/week06_picamera2_tutorial`. If you run a script again, it replaces the file from the earlier run, because it uses the same file name. Section D shows how to copy a file to your laptop.
 
-**Where to run the scripts.** Programs that open a window must run in a terminal on the Pi desktop: either on the lab monitor, or inside Raspberry Pi Connect **Screen sharing**. This applies to `rpicam-hello` and to scripts 1, 3, 3.1 and 4 of this tutorial. Raspberry Pi Connect **Remote shell** has no desktop, so these programs cannot open a window there. `rpicam-hello` then shows no picture, and the Python scripts stop with an error. `rpicam-still`, `rpicam-vid` and scripts 2, 5 and 5.1 do not need a window, so they also work in Remote shell. A program that you start in Remote shell stops when you close the browser tab.
+**Where to run the scripts.** Programs that open a window must run in a terminal on the Pi desktop: either on the lab monitor, or inside Raspberry Pi Connect **Screen sharing**. This applies to `rpicam-hello` and to scripts 1, 3, 3.1, 3.2 and 4 of this tutorial. Raspberry Pi Connect **Remote shell** has no desktop, so these programs cannot open a window there. `rpicam-hello` then shows no picture, and the Python scripts stop with an error. `rpicam-still`, `rpicam-vid` and scripts 2, 5 and 5.1 do not need a window, so they also work in Remote shell. Script 3.2 also works there if you turn its window off (section 3.2). A program that you start in Remote shell stops when you close the browser tab.
 
 **Only one program can use the camera at a time.** If Python stops with `Camera __init__ sequence did not complete` or `Device or resource busy`, another program is still using the camera. Look also for the line `Pipeline handler in use by another process` above the error. It means the same thing. Find the terminal that runs `rpicam-hello` or another camera script and press Ctrl+C there, or close its window. If several team members use the Pi through Pi Connect, agree who runs the camera. If you cannot find the program, restart the Pi.
 
@@ -185,17 +185,42 @@ config = picam2.create_video_configuration(
 
 In the script, `sensor_mode` is `{"output_size": (1332, 990), "bit_depth": 10}`, `target_size` is `(1332, 990)`, and `frame_duration_us` is 8333 microseconds, which is about 1/120 of a second. The main stream has the same size and shape as the sensor mode, so the whole 1332x990 sensor image is used. A main stream with a different shape would be cropped further to fit that shape.
 
-After `configure()`, the script prints `picam2.camera_configuration()["sensor"]`, which is the sensor mode that Picamera2 really chose. It should be `{'bit_depth': 10, 'output_size': (1332, 990)}`. While the script runs, it prints three numbers every second:
+After `configure()`, the script prints `picam2.camera_configuration()["sensor"]`, which is the sensor mode that Picamera2 really chose. It should be `{'bit_depth': 10, 'output_size': (1332, 990)}`. While the script runs, it prints four numbers every second:
 
 - The frame rate that the camera is set to. It comes from the `FrameDuration` value in the metadata of the latest frame. FrameDuration is the frame time that the camera was set to, in microseconds. The script reads the frame and its metadata together with `picam2.capture_request()`.
-- The rate of frames received. The number of frames received shows how many frames really reached Picamera2 in the last second. The script reads this number from `picam2.frames`.
-- The display loop rate. This is the number of frames that the loop showed on the screen in the last second. Showing a window takes time, so this number can be lower than the other two. In that case the loop misses some frames, but the camera itself still runs at 120 fps.
+- The rate of frames received. The number of frames received shows how many frames really reached Picamera2 in the last second. The script reads this number from `picam2.frames`. It should be about 120.
+- The processing loop rate. This is the number of frames that the loop took and could process in the last second. It should also be about 120.
+- The window rate. This is the number of frames that the loop showed on the screen in the last second, about 30.
+
+**Why the window shows only every 4th frame, at half size.** Drawing a large image in a window on the Pi desktop is a lot of work for the whole Pi, not only for your script: the desktop must draw the window too. While it does this, the camera system cannot keep up and the camera drops frames. If the script showed every frame at full size, only about 40 frames per second would arrive, even though the camera is set to 120 fps. This happens even when the window is drawn by a different program, so it is not caused by Python. So the script shows a half-size copy of every 4th frame. That is about 30 fps, which is smooth enough for your eyes, and then all 120 frames per second arrive. The loop can still get every frame, so you can put your own processing (for example finding the string) where the comment in the loop says. Then compare the processing loop rate with "Frames received". "Frames received" counts every frame that arrives from the camera, also the frames that the loop is too slow to take. If the processing loop rate is clearly below "Frames received", the loop misses frames, because your processing and the window together take too long. Then make your processing faster, for example by processing only a region of interest, or show the window less often or at a smaller size. Section 3.2 shows how to get a reading from every frame in this way.
 
 **What changes in the 120 fps mode:**
 - The field of view is narrower. The mode uses only the central 2664x1980 pixels of the sensor, which is about two-thirds of its width and two-thirds of its height. With the 6 mm lens, the view is about 38° wide instead of about 55°. The camera sees a smaller part of the scene, so check that the whole string stays inside the image, or move the camera further away.
 - Each frame lasts only 8.3 ms, so the exposure time cannot be longer than 8.3 ms. The camera then raises the gain to keep the image bright, so the image can be darker or noisier than at 30 fps, and you may need more light.
 
 **Can you still capture at 1080p?** Not at 120 fps. The HQ Camera cannot give 1920x1080 images at 120 fps. The fastest mode with 1080 rows, 2028x1080, stops at about 63 fps with 12 bits (about 75 fps with 10 bits and about 92 fps with 8 bits). If you need 120 fps, you must use a 1332x990 mode and accept its narrower field of view.
+
+---
+
+### 3.2. One Reading from Every Frame at 120 fps
+
+**Goal:** Get one measurement from every camera frame at 120 fps, here the angle of a yellow string, and check that no frame is skipped.
+
+**Script:** [`3.2_reading_per_frame.py`](3.2_reading_per_frame.py)
+
+Run it with `python 3.2_reading_per_frame.py`. It opens a window, so run it on the Pi desktop. To stop it, click the window and press `q`, or press Ctrl+C in the terminal. It saves every reading in `readings.csv`: one row per frame, with the time since the first frame in seconds (`time_s`, measured by the camera) and the angle in degrees (`angle_deg`, empty when no string was found). Like the images and videos of the other scripts, the file is replaced every time you run the script, so copy or rename it if you want to keep it.
+
+**Explanation:** The script uses the 120 fps setting of script 3.1. For every frame it finds the string with the colour method of Week 8: it converts the image to HSV, keeps the pixels in a yellow colour range, cleans the result, and fits a straight line to the largest yellow shape. The angle of this line from vertical is the reading. 0° means that the string hangs straight down, and a positive angle means that its bottom end is to the right. Week 8 explains each step and shows how to choose the colour range for your own string and light. Here, look at how the script keeps up with 120 fps.
+
+**Each frame has 8.3 ms.** At 120 fps a new frame arrives every 8.3 ms. If the processing of every frame takes longer, the loop is not ready for the next frame, and Picamera2 keeps only the newest frame for it, so the frames in between are lost. Picamera2 does not warn you. On a Raspberry Pi 5, the colour method takes about 8 to 9 ms for the whole 1332x990 frame. Together with the time to get each frame from the camera, this is too slow: the loop then gets only about 80 of the 120 frames per second. So the script processes only a region of interest (ROI), a strip that contains the string. By default this is the central third of the image (`roi` near the top of the script). It takes about 3 ms. Change `roi` so that it just contains your string, with some space for its movement. Making the image smaller with `cv2.resize()` first also works.
+
+**Check for skipped frames.** Every frame has a `SensorTimestamp`, the time at which the camera took it. If the time from one frame to the next is clearly longer than one frame time, frames were skipped. Every second the script prints the frames received from the camera ("Frames received", which stays near 120 even when your loop is too slow), the readings that your loop made ("Readings"), the frames skipped in that second ("Skipped"), the median time to process one frame ("Processing"), and the latest angle. At the end it prints the total number of skipped frames. If "Skipped" is large, look at "Frames received". If it stays near 120 but "Readings" is clearly lower, your loop is too slow. Then make the ROI smaller, or do less work per frame. If "Frames received" is also clearly below 120, some frames never reached Picamera2. Your loop could not take these frames, so a smaller ROI usually does not help with them. This can happen when the Pi draws windows on the desktop (see section 3.1). Then turn off the window (see below) and close other programs. Both can happen at the same time: if "Readings" is also clearly lower than "Frames received", your loop is too slow as well.
+
+**The window costs frames too.** A frame that also updates the window takes longer than the others. So the window here is smaller and slower than in script 3.1: one third of the size, every 6th frame (20 fps). With the window, a few frames per second can still be skipped (in our tests usually up to about 6, sometimes more). When every frame counts, for example when you record a measurement, set `show_window = False` near the top of the script. Then the script opens no window, so it also works in Remote shell, and almost no frames are skipped (3 in 8 seconds in our test). Stop it with Ctrl+C. The `time_s` column comes from the camera, so it stays correct even if a frame is skipped.
+
+**Does it help to use C++ instead of Python, or more threads?** Not for this kind of processing. The `cv2` functions run the same compiled C++ code of OpenCV that a C++ program would use. Python only adds about 2 microseconds to each `cv2` call. The script makes about 8 `cv2` calls per frame, so Python adds much less than 0.1 ms to the 3 ms that the processing of the ROI takes. Running the processing in several Python threads did not help either: on the Pi 5 it gave at most about 105 readings per second, and the camera itself dropped frames. Python is slow only when you go through the pixels in a Python loop, for example `for x in range(width):`. Use OpenCV or NumPy functions on the whole image or ROI instead.
+
+**Heat.** At 120 fps the Pi works hard. A Pi without a fan can become hot (above 80 °C) after a few minutes and then slows itself down, so that more frames are skipped. If "Skipped" grows after some minutes, check the temperature with `vcgencmd measure_temp`.
 
 ---
 
@@ -233,7 +258,7 @@ Run it with `python 5.1_record_120fps.py`. It opens no window, so it also works 
 
 **Explanation:** The script uses the same sensor setting as script 3.1: the 1332x990 sensor mode with 10 bits per pixel, and a frame time of 8333 microseconds (about 1/120 of a second). It prints the sensor mode in use, so you can check it. Like script 5, it turns off the automatic exposure and the automatic white balance before it starts to record.
 
-- The Raspberry Pi 5 has no hardware video encoder (the CM5 has none either), so the processor encodes the video. This is a lot of work at 120 fps.
+- The Raspberry Pi 5 has no hardware video encoder (the CM5 has none either), so the processor encodes the video. This is a lot of work at 120 fps. At the full 1332x990 size, the processor cannot keep up, and a 5-second clip has only about 520 frames instead of 600. So the script records at 888x660 (`video_size` near the top of the script). This is 2/3 of the sensor image in each direction, with the same shape and the same field of view, and the clip keeps all its frames.
 - The script writes the file with `PyavOutput`, so that every frame keeps the camera's own time (its timestamp). Script 5 uses `FfmpegOutput` instead, which gives each frame the time at which it reached FFmpeg.
 
 **Check the clip.** A 5-second clip at 120 fps should hold about 600 frames. At the end, the script prints this command, which counts the frames in the file:
@@ -242,7 +267,7 @@ Run it with `python 5.1_record_120fps.py`. It opens no window, so it also works 
 ffprobe -v error -count_frames -select_streams v:0 -show_entries stream=nb_read_frames -of csv=p=0 clip_120fps.mp4
 ```
 
-If the number is clearly smaller than 600, the processor did not encode every frame in time. Then make the video smaller: near the top of the script, change `video_size` to a smaller size, for example `(666, 494)`, and record again. The sensor still runs at 120 fps, and the processor has less work to do.
+If the number is clearly smaller than 600, the processor did not encode every frame in time. This can happen if other programs are busy at the same time, or if the Pi is hot. Then make the video smaller: near the top of the script, change `video_size` to a smaller size, for example `(592, 440)`, and record again. Keep the height a multiple of 4. With other heights, the colours in the video are shifted. The sensor still runs at 120 fps, and the processor has less work to do.
 
 ---
 

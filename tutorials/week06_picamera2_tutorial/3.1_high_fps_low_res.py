@@ -36,9 +36,18 @@ def main():
 
     print(f"Target: {target_fps} fps at {target_size}. Press 'q' to quit.")
 
-    # picam2.frames counts every frame that reaches Picamera2, including the
-    # frames that this loop is too slow to show.
-    t0, n, f0 = time.time(), 0, picam2.frames
+    # Drawing a large window is a lot of work for the whole Pi (the desktop draws it
+    # too). While it does this, the camera system cannot keep up and drops frames:
+    # with a full-size window on every frame, only about 40 of the 120 fps arrive.
+    # So we show only every 4th frame (about 30 fps, enough for the eye), at half
+    # size. Then the loop can get all 120 frames per second, but only while each
+    # pass of the loop, including your own processing (for example finding the
+    # string), takes less than about 8 ms on average.
+    show_every = 4
+    display_size = (target_size[0] // 2, target_size[1] // 2)
+
+    # picam2.frames counts every frame that reaches Picamera2.
+    t0, n, shown, f0 = time.time(), 0, 0, picam2.frames
     while True:
         # capture_request() gives us one frame together with its own metadata.
         request = picam2.capture_request()
@@ -46,19 +55,24 @@ def main():
         metadata = request.get_metadata()
         request.release()                    # always give the buffer back to the camera
         n += 1
+        # Put your own processing of `frame` here. It runs on every frame only if the
+        # loop stays fast (less than about 8 ms per pass on average). If "Processing
+        # loop" is clearly below "Frames received", the loop is too slow and misses frames.
+
         dt = time.time() - t0
         if dt >= 1:
             # FrameDuration is the frame time that the camera was set to, in microseconds.
             set_fps = 1_000_000 / metadata["FrameDuration"]
             received_fps = (picam2.frames - f0) / dt
             print(f"Camera set to: {set_fps:.1f} fps   Frames received: {received_fps:.0f} fps   "
-                  f"Display loop: {n / dt:.0f} fps")
-            t0, n, f0 = time.time(), 0, picam2.frames
+                  f"Processing loop: {n / dt:.0f} fps   Window: {shown / dt:.0f} fps")
+            t0, n, shown, f0 = time.time(), 0, 0, picam2.frames
 
-        cv2.imshow("High FPS Preview", frame)
-
-        if cv2.waitKey(1) & 0xFF == ord('q'):
-            break
+        if n % show_every == 0:
+            cv2.imshow("High FPS Preview", cv2.resize(frame, display_size))
+            shown += 1
+            if cv2.waitKey(1) & 0xFF == ord('q'):
+                break
 
     cv2.destroyAllWindows()
     picam2.stop()
