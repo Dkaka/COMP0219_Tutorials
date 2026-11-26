@@ -1,0 +1,58 @@
+%PDF-1.4
+%‚„œ”
+1 0 obj
+<< /Type /Catalog /Pages 2 0 R >>
+endobj
+2 0 obj
+<< /Type /Pages /Kids [3 0 R] /Count 1 >>
+endobj
+3 0 obj
+<< /Type /Page /Parent 2 0 R /MediaBox [0 0 841.890 595.276] /Resources << /Font << /F1 5 0 R >> >> /Contents 4 0 R >>
+endobj
+4 0 obj
+<< /Length 1181 >>
+stream
+0 g
+35.433 442.205 96.378 96.378 re f
+228.189 442.205 96.378 96.378 re f
+420.945 442.205 96.378 96.378 re f
+613.701 442.205 96.378 96.378 re f
+131.811 345.827 96.378 96.378 re f
+324.567 345.827 96.378 96.378 re f
+517.323 345.827 96.378 96.378 re f
+710.079 345.827 96.378 96.378 re f
+35.433 249.449 96.378 96.378 re f
+228.189 249.449 96.378 96.378 re f
+420.945 249.449 96.378 96.378 re f
+613.701 249.449 96.378 96.378 re f
+131.811 153.071 96.378 96.378 re f
+324.567 153.071 96.378 96.378 re f
+517.323 153.071 96.378 96.378 re f
+710.079 153.071 96.378 96.378 re f
+35.433 56.693 96.378 96.378 re f
+228.189 56.693 96.378 96.378 re f
+420.945 56.693 96.378 96.378 re f
+613.701 56.693 96.378 96.378 re f
+0.6 w 35.433 569.764 m 318.898 569.764 l S
+0.6 w 35.433 564.094 m 35.433 575.433 l S
+0.6 w 318.898 564.094 m 318.898 575.433 l S
+BT /F1 8 Tf 327.402 566.362 Td (Check: this line must be 100 mm long. If it is not, measure one square and set square_size in calibration.py.) Tj ET
+BT /F1 8 Tf 35.433 19.843 Td (COMP0219 calibration chessboard: 5 x 8 squares \(4 x 7 inner corners\), square size 34 mm. Print on A4 at 100 % \(actual size\), not 'fit to page'. Keep the sheet flat.) Tj ET
+endstream
+endobj
+5 0 obj
+<< /Type /Font /Subtype /Type1 /BaseFont /Helvetica >>
+endobj
+xref
+0 6
+0000000000 65535 f 
+0000000015 00000 n 
+0000000064 00000 n 
+0000000121 00000 n 
+0000000255 00000 n 
+0000001487 00000 n 
+trailer
+<< /Size 6 /Root 1 0 R >>
+startxref
+1557
+%%EOF

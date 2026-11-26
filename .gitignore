@@ -17,9 +17,11 @@ dist/
 *.exe
 
 # Maintainer files, kept on the TA's laptop and not in git: the manual (its source, pictures and PDF; the PDF is
-# attached to each release), the logo and VDAS-check scripts, and the release notes and instructions
-docs/
-tools/
+# attached to each release), the logo and VDAS-check scripts, and the release notes and instructions.
+# The leading "/" limits docs/ and tools/ to the top folder, so that tutorial folders such as
+# tutorials/week07_calibration/docs/ (a web page) are not ignored.
+/docs/
+/tools/
 RELEASING.md
 RELEASE_NOTES.md
 

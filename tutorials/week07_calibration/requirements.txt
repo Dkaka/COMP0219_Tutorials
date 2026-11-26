@@ -1,0 +1,6 @@
+# For LAPTOPS only (Windows, macOS or Linux), in a normal virtual environment.
+# Do NOT pip install this file on the Raspberry Pi. On the Pi, OpenCV and NumPy come from apt
+# (sudo apt install -y python3-opencv). A pip copy of OpenCV or NumPy on the Pi stops Picamera2 from working.
+# Install only ONE OpenCV package: opencv-python and opencv-contrib-python conflict.
+numpy
+opencv-python>=4.8,<5
