@@ -254,7 +254,9 @@ svg.diagram .cap { font: 500 11px var(--mono); letter-spacing: .08em; text-trans
 /* ---- quiz ----------------------------------------------------------------- */
 details.q { border-top: var(--hair); max-width: var(--measure); }
 details.q:last-of-type { border-bottom: var(--hair); }
-details.q summary { list-style: none; cursor: pointer; display: grid; grid-template-columns: 3rem 1fr auto; padding: 12px 0; font-weight: 500; }
+details.q summary { list-style: none; cursor: pointer; display: grid; grid-template-columns: 3rem minmax(0, 1fr) auto; align-items: baseline; padding: 12px 0; font-weight: 500; }
+/* The question text must be one element: bare text next to <code> or a formula would become separate grid cells. */
+details.q summary .qt { min-width: 0; padding-right: 16px; }
 details.q summary::-webkit-details-marker { display: none; }
 details.q summary .n { font: 500 13px/1.6 var(--mono); color: var(--accent); }
 details.q summary::after { content: "Show"; font: 500 11px/2 var(--mono); letter-spacing: .08em; text-transform: uppercase; color: var(--mute); }
@@ -346,7 +348,7 @@ details.fold > .ocv { margin: 0 0 14px; }
   .gallery { grid-template-columns: repeat(2, minmax(0, 1fr)); }
   .cards a { grid-template-columns: 1fr; gap: 6px; }
   .cards .go { display: none; }
-  details.q summary { grid-template-columns: 2.2rem 1fr auto; }
+  details.q summary { grid-template-columns: 2.2rem minmax(0, 1fr) auto; }
   details.q .a { padding-left: 2.2rem; }
   .steps > li { grid-template-columns: 2.2rem 1fr; }
   .code pre { font-size: 12.5px; padding: 12px; }
