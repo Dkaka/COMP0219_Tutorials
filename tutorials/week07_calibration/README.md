@@ -5,6 +5,7 @@ This tutorial provides scripts for capturing calibration images and performing c
 The same tutorial is also a web page, with interactive figures and real results from the HQ camera: [Week 7 lens calibration (web page)](https://dkaka.github.io/COMP0219_Tutorials/tutorials/week07_calibration/docs/). The page is in [`docs/`](docs/), and it is also on Moodle.
 
 - `calibration_cap.py` captures photos of a chessboard. On the Raspberry Pi it uses the HQ camera through Picamera2. On a laptop it uses the webcam, which is only useful for practice.
+- `calibration_gui.py` captures the same photos in a window with buttons, on the Raspberry Pi desktop. Before it saves a photo, it checks that the board is still and that `calibration.py` will find the board in the photo. It also shows which parts of the image still need photos.
 - `calibration.py` calculates the camera matrix and the distortion coefficients from a folder of chessboard photos, or from a video of a chessboard. It runs on the Raspberry Pi and on a laptop.
 
 ## Why calibrate?
@@ -76,6 +77,7 @@ If Windows does not find the `py` command, use `python` instead. If PowerShell s
 ```
 week07_calibration/
 ├── calibration_cap.py              # Script for capturing calibration images
+├── calibration_gui.py              # The same, in a window with buttons (Raspberry Pi desktop)
 ├── calibration.py                  # Script for camera calibration
 ├── calibration_data.npz            # Reference result for the sample images
 ├── chessboard_5x8_34mm_A4.pdf      # The chessboard to print (A4, 34 mm squares)
@@ -86,7 +88,7 @@ week07_calibration/
 └── README.md                       # This file
 ```
 
-The scripts create two more folders next to themselves. `calibration_cap.py` saves your photos in `calibration_images/`, and `calibration.py` writes its results to `calibration_output/`.
+The scripts create two more folders next to themselves. `calibration_cap.py` and `calibration_gui.py` save your photos in `calibration_images/`, and `calibration.py` writes its results to `calibration_output/`.
 
 ## Usage
 
@@ -104,6 +106,35 @@ The scripts are set up for a chessboard with **5 × 8 squares of 34 mm**. This b
 You can also use a different chessboard. Then count its inner corners, set `chessboard_size` in both scripts, and set `square_size` to the size of one square.
 
 ### Step 1: Capture Calibration Images
+
+There are two programs for taking the photos. Both save the photos in the same folder, `calibration_images/`, so you can use either of them, or both.
+
+- `calibration_gui.py` opens a window with buttons on the Raspberry Pi desktop. It helps you most, so use it if you can (see the next section).
+- `calibration_cap.py` works with keys. It also works without a desktop, for example over SSH or in the Pi Connect remote shell (terminal mode).
+
+#### The capture window: `calibration_gui.py`
+
+Run it in a terminal on the Raspberry Pi desktop (on the lab monitor, or in the screen sharing of Raspberry Pi Connect):
+
+```bash
+python calibration_gui.py
+```
+
+The window needs Tkinter, which comes with the desktop version of Raspberry Pi OS. If Python says that `tkinter` is missing, install it with `sudo apt install -y python3-tk`. SSH and the Pi Connect remote shell have no desktop, so there the program stops with a message. Use `calibration_cap.py` there instead.
+
+Press **Start** to see the live picture of the camera. Then hold the board in front of the camera.
+
+- The status line under the picture says what the program sees: "No chessboard", "hold still" or "ready". When it says "ready", press Space or the **Save photo** button.
+- **Motion check** (on at the start): a photo is saved only after the board has been still for a moment (0.3 seconds), so that the photo is sharp. A hand that holds the board quietly is still enough. If you press Space while the board moves, the program saves nothing and tells you so. Untick **Motion check** to save without waiting. Then hold the board steady yourself, because a moving board gives a blurred photo.
+- **Auto capture** (off at the start): tick it, and the program saves a photo by itself each time you hold the board still at a new position. Then you can hold the board with both hands. If the motion check is off, Auto capture saves each new position, at most once a second.
+- Before it saves a photo, the program searches the full-size photo for the board in the same way as `calibration.py`. If this search fails, the photo is not saved, and the program says why this can happen. So `calibration.py` can use every photo that the window saves.
+- The **Board positions** panel on the right shows each saved board in green. The parts of the image that no photo covers yet are red. The status line says how many of the nine parts of the image (3 × 3) still need photos, and after each photo the program names them. Hold the board in the red parts next, especially in the corners of the image. The green dots on the live picture are the corners in the photos so far.
+- From 4 photos on, the window calibrates in the background and shows the focal length, the image centre, k1 and the RMS error so far. It uses the same settings as `calibration.py`, so `calibration.py` gives the same result for the same photos. The pixels of the camera are square, so fx and fy should be almost equal. If they differ by more than 10 %, the window says that the estimate is not reliable yet: the photos are too similar, for example all facing the camera, so add tilted photos and photos near the corners of the image. Tick **Undistorted view** to see the live picture corrected with this estimate. Lines that are straight in the scene should then look straight.
+- **Undo last** (or the `u` key) deletes the last photo that you saved since you started the program. Press `q` or close the window to end the program. Ctrl+C in the terminal also closes it.
+
+The window looks for the board in a small grey copy of each picture (640 × 480 pixels), which the camera makes at the same time as the full-size photo. This keeps the live picture fast. `CAPTURE_SIZE`, `SENSOR` and `CHESSBOARD_SIZE` at the top of `calibration_gui.py` work in the same way as `CAPTURE_SIZE`, `SENSOR` and `chessboard_size` in `calibration_cap.py` (see below). When you have enough photos, run `python calibration.py --images calibration_images` (Step 2).
+
+#### The keyboard script: `calibration_cap.py`
 
 Use `calibration_cap.py` to capture images of a chessboard pattern from different angles and distances. Run it on the Raspberry Pi, so that it uses the HQ camera.
 
@@ -143,6 +174,8 @@ On a laptop, Picamera2 is not installed, so the script uses the webcam through `
 
 The script checks for the chessboard quickly, on a smaller copy of each frame. `calibration.py` checks again on the full image, so it can still skip an image that is blurred.
 
+#### For both programs
+
 **Before you take the photos:**
 - Check that `CAPTURE_SIZE` and `SENSOR` are the same as in your wind-tunnel recordings, as described above.
 - Focus the lens on the board at about the distance where your object will be in the wind tunnel. After that, do not turn the focus ring.
@@ -161,7 +194,7 @@ The script checks for the chessboard quickly, on a smaller copy of each frame. `
 
 **Rules for every photo:**
 - The whole board, with some of the white border around the squares, is inside the image.
-- The board is sharp. Hold it still, and press `c` only while the preview shows "Chessboard found" (in terminal mode: press Enter after the script prints "Chessboard found").
+- The board is sharp. Hold it still, and press `c` only while the preview shows "Chessboard found" (in terminal mode: press Enter after the script prints "Chessboard found"). In the capture window, the motion check does this for you.
 - Do not tilt the board by more than about 60 degrees, because the squares then look too thin to be found reliably.
 - Stay in the distance range in which the preview is sharp (in terminal mode: at about the distance at which you focused the lens). Do not refocus.
 
@@ -182,7 +215,7 @@ The first picture below is the sample photo `calibration_image_09.jpg`. The othe
 - **Board cut off:** The board is not found, so keep the whole board, with some of its white border, inside the image.
 - **Too dark:** The board is still found, and the corners are on average only 0.1 px (and up to 0.5 px) away from their positions in the sharp photo. Add light anyway: in dim light the camera uses a longer exposure time, so a moving board blurs more easily.
 
-Blur is the most dangerous fault, because the board is still found and the photo is saved. If the motion-blurred photo replaces `calibration_image_09.jpg` in the sample photos, the RMS reprojection error over all photos rises from 0.35 px to 0.54 px. The error of this one photo is 1.02 px, while the other photos have 0.22 to 0.62 px. So always look at the error of each photo (see "Check your own calibration" in Step 2).
+Blur is the most dangerous fault, because the board is still found and the photo is saved. The motion check of `calibration_gui.py` refuses photos of a moving board, but it cannot notice a lens that is out of focus. If the motion-blurred photo replaces `calibration_image_09.jpg` in the sample photos, the RMS reprojection error over all photos rises from 0.35 px to 0.54 px. The error of this one photo is 1.02 px, while the other photos have 0.22 to 0.62 px. So always look at the error of each photo (see "Check your own calibration" in Step 2).
 
 ### Step 2: Perform Camera Calibration
 
@@ -336,3 +369,5 @@ Sample calibration images are provided in `sample_calibration_images/` for testi
 ## Credits
 
 Some figures and parts of this text are based on the COMP0241 Week 3 calibration tutorial (slides "Camera Intrinsic Calibration" by Luchen Li). The terminal mode of `calibration_cap.py` is also based on it.
+
+`calibration_gui.py` is the capture window of the COMP0241 Week 3 calibration tutorial (`w3_calibration_gui.py`), changed to use the Raspberry Pi camera. The green board positions, the corner dots, saving a still board by itself, the running estimate and the undistorted view follow OpenCV's interactive camera calibration application ([OpenCV tutorial](https://docs.opencv.org/4.x/d7/d21/tutorial_interactive_calibration.html)).

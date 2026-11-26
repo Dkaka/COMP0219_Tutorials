@@ -486,6 +486,36 @@ cd ~/COMP0219_Tutorials/tutorials/week07_calibration</code></pre></div>
 <section class="s" id="s10">
   <div class="s-head"><span class="n">3.1</span><h3>Capture photos</h3></div>
   <div class="s-body">
+    <p>There are two programs for taking the photos. Both save the photos in the same folder, <code>calibration_images/</code>, so you can use either of them, or both.</p>
+    <ul>
+      <li><code>calibration_gui.py</code> opens a window with buttons on the Raspberry Pi desktop. It helps you most, so use it if you can.</li>
+      <li><code>calibration_cap.py</code> works with keys. It also works without a desktop, for example over SSH or in the Pi Connect remote shell (<a class="sref" href="#terminal-mode">terminal mode</a>).</li>
+    </ul>
+
+    <h4 id="gui">On the Pi desktop: the capture window (<code>calibration_gui.py</code>)</h4>
+    <div class="code"><div class="cap"><span class="file">Terminal on the Pi desktop · in week07_calibration</span><button class="copy">Copy</button></div><pre><code class="language-bash">python calibration_gui.py</code></pre></div>
+    <p>Run it in a terminal on the Raspberry Pi desktop, on the lab monitor or in the screen sharing of Raspberry Pi Connect. The window needs Tkinter, which comes with the desktop version of Raspberry Pi OS. If Python says that <code>tkinter</code> is missing, install it with <code>sudo apt install -y python3-tk</code>. SSH and the Pi Connect remote shell have no desktop, so there the program stops with a message. Use <code>calibration_cap.py</code> there instead.</p>
+    <p>Press <b>Start</b> to see the live picture of the camera. Then hold the board in front of the camera. The status line under the picture says what the program sees: “No chessboard”, “hold still” or “ready”.</p>
+    <table class="tbl" style="max-width:44rem">
+      <thead><tr><th>Control</th><th>What it does</th></tr></thead>
+      <tbody>
+        <tr><td><b>Save photo</b>, <kbd>Space</kbd> or <kbd>c</kbd></td><td>Save a photo when the status line says “ready”.</td></tr>
+        <tr><td><b>Motion check</b> (on at the start)</td><td>A photo is saved only after the board has been still for a moment (0.3 seconds), so that the photo is sharp. A hand that holds the board quietly is still enough. If you untick it, hold the board steady yourself, because a moving board gives a blurred photo.</td></tr>
+        <tr><td><b>Auto capture</b> (off at the start)</td><td>The program saves a photo by itself each time you hold the board still at a new position. Then you can hold the board with both hands.</td></tr>
+        <tr><td><b>Undistorted view</b></td><td>Show the live picture corrected with the running estimate (see below). Lines that are straight in the scene should then look straight.</td></tr>
+        <tr><td><b>Undo last</b> or <kbd>u</kbd></td><td>Delete the last photo that you saved since you started the program.</td></tr>
+        <tr><td><kbd>q</kbd></td><td>Quit. You can also close the window, or press Ctrl+C in the terminal.</td></tr>
+      </tbody>
+    </table>
+    <ul>
+      <li>Before it saves a photo, the program searches the full-size photo for the board in the same way as <code>calibration.py</code>. If this search fails, the photo is not saved, and the program says why this can happen. So <code>calibration.py</code> can use every photo that the window saves.</li>
+      <li>The <b>Board positions</b> panel shows each saved board in green, and the parts of the image that no photo covers yet in red. Hold the board in the red parts next, especially in the corners of the image. This is the coverage check of <a class="sref" href="#s08">section 2.3</a>, done while you take the photos.</li>
+      <li>From 4 photos on, the window calibrates in the background and shows the focal length, the image centre, k<sub>1</sub> and the RMS error so far. It uses the same settings as <code>calibration.py</code>, so <code>calibration.py</code> gives the same result for the same photos. The pixels of the camera are square, so f<sub>x</sub> and f<sub>y</sub> should be almost equal. If they differ by more than 10 %, the window says that the estimate is not reliable yet. Then add photos with the board tilted and near the corners of the image.</li>
+      <li><code>CAPTURE_SIZE</code>, <code>SENSOR</code> and <code>CHESSBOARD_SIZE</code> at the top of <code>calibration_gui.py</code> work in the same way as the settings of <code>calibration_cap.py</code> below.</li>
+    </ul>
+    <p>When you have enough photos, press <kbd>q</kbd> and run the calibration with <code>python calibration.py --images calibration_images</code> (<a class="sref" href="#s11">section 3.2</a>).</p>
+
+    <h4 id="cap">The keyboard script: <code>calibration_cap.py</code></h4>
     <div class="code"><div class="cap"><span class="file">Terminal on the Pi · in week07_calibration</span><button class="copy">Copy</button></div><pre><code class="language-bash">python calibration_cap.py</code></pre></div>
     <p>The script sets up the camera and prints the sensor mode that the camera really uses. Check that it is the same sensor mode as in your recordings. With the default settings, the beginning of the output looks like this (libcamera also prints some coloured <code>INFO</code> lines, which are harmless):</p>
     <div class="code out"><div class="cap"><span class="file">Output · Pi desktop, default settings</span></div><pre><code class="language-plaintext">Camera: Raspberry Pi camera (Picamera2)
@@ -495,7 +525,7 @@ Press 'c' to capture an image and save it (only when the chessboard is found).
 Press 'q' to quit.
 If no window appears (for example over SSH), press Ctrl+C and run the script again with --nogui.</code></pre></div>
 
-    <h4>On the Pi desktop: the preview window</h4>
+    <h4>Keyboard script on the Pi desktop: the preview window</h4>
     <p>A window called <b>Calibration Capture</b> shows the live camera image. It shows “Chessboard found” and draws the corners when it can see the whole chessboard, and “No chessboard” when it cannot. <b>Click on the window first</b>, so that it receives your key presses. Then:</p>
     <table class="tbl" style="max-width:44rem">
       <thead><tr><th>Key</th><th>Action</th></tr></thead>
@@ -514,7 +544,7 @@ If no window appears (for example over SSH), press Ctrl+C and run the script aga
       </ul>
     </div>
 
-    <h4 id="terminal-mode">In Remote shell or over SSH: terminal mode</h4>
+    <h4 id="terminal-mode">Keyboard script in Remote shell or over SSH: terminal mode</h4>
     <p>Without a display, the script opens no window. Instead, it prints “Chessboard found” or “No chessboard” in the terminal each time this changes.</p>
     <table class="tbl" style="max-width:44rem">
       <thead><tr><th>You type</th><th>Action</th></tr></thead>
@@ -1193,9 +1223,9 @@ cv2.destroyAllWindows()</code></pre></div>
   <div class="s-body">
 <p>This tutorial draws on the sources below. Most sections also link to the OpenCV pages that they draw on.</p>
 <ul>
-  <li><b>COMP0241 intrinsic calibration tutorial.</b> This page is adapted from the UCL COMP0241 lab tutorial “Camera intrinsic calibration with OpenCV” (repository Dkaka/COMP241_Labs, folder <code>calibration_tutorial/intrinsic/docs</code>). Its layout, styles and interactive figures, most of the theory in part 1, the checklist, the simulated good and bad photos, the simulated shot-list comparison in <a class="sref" href="#s08">section 2.3</a> and the table in “Interpret your result” (<a class="sref" href="#interpret">section 4.2</a>) come from that page, changed for one Raspberry Pi HQ camera. We left out its ChArUco board, its capture window with buttons, its fisheye model and its stereo calibration.</li>
+  <li><b>COMP0241 intrinsic calibration tutorial.</b> This page is adapted from the UCL COMP0241 lab tutorial “Camera intrinsic calibration with OpenCV” (repository Dkaka/COMP241_Labs, folder <code>calibration_tutorial/intrinsic/docs</code>). Its layout, styles and interactive figures, most of the theory in part 1, the checklist, the simulated good and bad photos, the simulated shot-list comparison in <a class="sref" href="#s08">section 2.3</a> and the table in “Interpret your result” (<a class="sref" href="#interpret">section 4.2</a>) come from that page, changed for one Raspberry Pi HQ camera. We left out its ChArUco board, its fisheye model and its stereo calibration.</li>
   <li><b>Lecture slides behind COMP0241.</b> The COMP0241 page follows the slides “Camera Intrinsic Calibration” by Luchen Li. Here, the section headings give the matching slides of COMP0219 Lecture 5 instead.</li>
-  <li><b>Sample photos and scripts.</b> The six photos in <code>sample_calibration_images/</code> are the sample photos of the COMP0241 lab, which COMP0241 credits to Luchen Li. <code>calibration.py</code> and <code>calibration_cap.py</code> have the same origin as the first COMP0241 scripts and were extended for COMP0219 (Picamera2, terminal mode, video input). The terminal mode of <code>calibration_cap.py</code> is based on the COMP0241 capture script. The 17-photo shot list and the printable chessboard were written for COMP0219 and are also used by COMP0241.</li>
+  <li><b>Sample photos and scripts.</b> The six photos in <code>sample_calibration_images/</code> are the sample photos of the COMP0241 lab, which COMP0241 credits to Luchen Li. <code>calibration.py</code> and <code>calibration_cap.py</code> have the same origin as the first COMP0241 scripts and were extended for COMP0219 (Picamera2, terminal mode, video input). The terminal mode of <code>calibration_cap.py</code> is based on the COMP0241 capture script. <code>calibration_gui.py</code> is the capture window of the COMP0241 lab (<code>w3_calibration_gui.py</code>), changed to use the Raspberry Pi camera. Its board positions, corner dots, automatic saving of a still board, running estimate and undistorted live view follow OpenCV’s <a href="https://docs.opencv.org/4.x/d7/d21/tutorial_interactive_calibration.html" target="_blank" rel="noopener">interactive camera calibration application</a>, and showing the uncovered parts in red comes from the COMP0241 window. The 17-photo shot list and the printable chessboard were written for COMP0219 and are also used by COMP0241.</li>
   <li><b>HQ camera photos.</b> The 23 photos, their outputs and the figures made from them (<a class="sref" href="#real-bad">section 2.3</a>, <a class="sref" href="#hq-output">section 3.2</a>, the HQ examples in <a class="sref" href="#s12">sections 3.3</a> and <a class="sref" href="#s13">3.4</a>) come from a test of this tutorial on a course kit (Raspberry Pi 5, HQ camera, 6 mm lens) on 26 November 2026.</li>
   <li><b>OpenCV tutorial <a href="https://docs.opencv.org/4.x/dc/dbb/tutorial_py_calibration.html" target="_blank" rel="noopener">Camera Calibration</a> (Python).</b> <code>calibration.py</code> follows its code: the object points and the corner detection and refinement (Code, Setup), the <code>calibrateCamera</code> call (Calibration), undistorting and cropping to the ROI (Undistortion), and the reprojection error (Re-projection Error; <a class="sref" href="#s12">section 3.3</a> explains how the script's number differs). <code>undistort_live.py</code> in <a class="sref" href="#s17">section 5.1</a> follows its “2. Using remapping” approach.</li>
   <li><b>OpenCV tutorial <a href="https://docs.opencv.org/4.x/d4/d94/tutorial_camera_calibration.html" target="_blank" rel="noopener">Camera calibration With OpenCV</a></b> (C++, original author Bernát Gábor). Its Theory section gives the five distortion coefficients in OpenCV's order (<a class="sref" href="#s04">section 1.4</a>).</li>
